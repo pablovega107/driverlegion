@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Taxímetro Legion Gaming</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body{
+      margin:0;
+      font-family: Arial, Helvetica, sans-serif;
+      background:#05070c;
+      color:white;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+    }
+    .app{
+      width:360px;
+      background:#0b1220;
+      border-radius:18px;
+      padding:20px;
+      box-shadow:0 0 30px rgba(0,255,255,.25);
+    }
+    .logo{
+      text-align:center;
+      margin-bottom:10px;
+    }
+    .logo img{
+      max-width:220px;
+    }
+    h2{
+      text-align:center;
+      color:#22d3ee;
+      margin:10px 0;
+    }
+    label{
+      font-size:14px;
+    }
+    input{
+      width:100%;
+      padding:10px;
+      margin:6px 0 12px;
+      border-radius:8px;
+      border:none;
+      outline:none;
+    }
+    button{
+      width:100%;
+      padding:12px;
+      border:none;
+      border-radius:10px;
+      font-weight:bold;
+      cursor:pointer;
+      margin-top:6px;
+      background:linear-gradient(135deg,#22d3ee,#14b8a6);
+    }
+    .stop{
+      background:linear-gradient(135deg,#ef4444,#f97316);
+      color:white;
+    }
+    .hidden{display:none;}
+
+    .meter{
+      background:#020617;
+      border-radius:12px;
+      padding:15px;
+      margin-top:15px;
+      text-align:center;
+    }
+    .price{
+      font-size:36px;
+      color:#22d3ee;
+      font-weight:bold;
+    }
+    .time{
+      font-size:14px;
+      opacity:.8;
+    }
+
+    .admin{
+      margin-top:20px;
+      background:#020617;
+      border-radius:12px;
+      padding:15px;
+    }
+    .log{
+      background:#020617;
+      margin-top:10px;
+      padding:8px;
+      border-radius:8px;
+      max-height:140px;
+      overflow-y:auto;
+      font-size:12px;
+    }
+
+    .tarifas{
+      margin-top:15px;
+      background:#020617;
+      border-radius:12px;
+      padding:15px;
+    }
+    .tarifas h3{
+      text-align:center;
+      color:#14b8a6;
+      margin:0 0 10px;
+      font-size:16px;
+    }
+    .tarifa-tabla{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+    }
+    .tarifa-tabla th{
+      text-align:left;
+      color:#22d3ee;
+      padding:4px 6px;
+      border-bottom:1px solid #1e293b;
+    }
+    .tarifa-tabla td{
+      padding:4px 6px;
+      border-bottom:1px solid #0f172a;
+    }
+    .tarifa-tabla tr:last-child td{
+      border-bottom:none;
+    }
+    .tarifa-nota{
+      font-size:11px;
+      opacity:.6;
+      margin-top:8px;
+      text-align:center;
+    }
+
+    .recibo{
+      margin-top:15px;
+      background:linear-gradient(135deg,#0f172a,#1e293b);
+      border:2px solid #22d3ee;
+      border-radius:12px;
+      padding:15px;
+      text-align:center;
+    }
+    .recibo h3{
+      color:#22d3ee;
+      margin:0 0 10px;
+      font-size:18px;
+    }
+    .recibo-detalle{
+      font-size:13px;
+      text-align:left;
+      margin-bottom:10px;
+    }
+    .recibo-detalle div{
+      padding:3px 0;
+      border-bottom:1px solid #1e293b;
+    }
+    .recibo-total{
+      font-size:32px;
+      font-weight:bold;
+      color:#22d3ee;
+      margin:10px 0;
+    }
+    .recibo-label{
+      font-size:12px;
+      opacity:.7;
+      margin-bottom:5px;
+    }
+    .btn-cerrar-recibo{
+      width:100%;
+      padding:10px;
+      border:none;
+      border-radius:8px;
+      background:linear-gradient(135deg,#22d3ee,#14b8a6);
+      font-weight:bold;
+      cursor:pointer;
+      margin-top:8px;
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+
+  <div class="logo">
+    <img src="legion_logo.png" alt="Legion Gaming">
+  </div>
+
+  <h2>Taxímetro</h2>
+
+  <label>Nombre del Taxista</label>
+  <input id="taxista" placeholder="Ej. Vega">
+
+  <label>Nombre del Cliente</label>
+  <input id="cliente" placeholder="Ej. Juan">
+
+  <button onclick="iniciar()">Iniciar viaje</button>
+  <button id="btnStop" class="stop hidden" onclick="detener()">Finalizar viaje</button>
+
+  <div class="meter">
+    <div class="price" id="precio">$0</div>
+    <div class="time" id="tiempo">00:00</div>
+  </div>
+
+  <!-- Tabla de tarifas para el taxista -->
+  <div class="tarifas">
+    <h3>Tabla de Tarifas</h3>
+    <table class="tarifa-tabla">
+      <thead>
+        <tr><th>Tiempo</th><th>Cobro</th></tr>
+      </thead>
+      <tbody id="tablaTarifas"></tbody>
+    </table>
+    <div class="tarifa-nota">Tarifa: $<span id="tarifaInfo"></span>/seg &mdash; $<span id="tarifaMinInfo"></span>/min</div>
+  </div>
+
+  <!-- Recibo al finalizar viaje -->
+  <div class="recibo hidden" id="recibo">
+    <h3>Recibo de Viaje</h3>
+    <div class="recibo-detalle" id="reciboDetalle"></div>
+    <div class="recibo-label">TOTAL A COBRAR</div>
+    <div class="recibo-total" id="reciboTotal">$0</div>
+    <button class="btn-cerrar-recibo" onclick="cerrarRecibo()">Aceptar</button>
+  </div>
+
+  <div class="admin">
+    <h2>Panel Admin</h2>
+    <input id="adminPass" type="password" placeholder="Contraseña">
+    <button onclick="loginAdmin()">Entrar</button>
+
+    <div id="adminPanel" class="hidden">
+      <p><b>Activos:</b> <span id="activos">0</span></p>
+      <div class="log" id="logs"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let segundos = 0;
+  let precio = 0;
+  let intervalo;
+  let activos = 0;
+  let taxistaActual = "";
+  let clienteActual = "";
+
+  const TARIFA_POR_SEGUNDO = 8.5;
+  const TARIFA_POR_MINUTO = TARIFA_POR_SEGUNDO * 60;
+
+  let registros = JSON.parse(localStorage.getItem("registros_legion")) || [];
+
+  // Generar tabla de tarifas de referencia
+  function generarTablaTarifas(){
+    const tbody = document.getElementById("tablaTarifas");
+    const tiempos = [
+      {label:"1 minuto", seg:60},
+      {label:"2 minutos", seg:120},
+      {label:"3 minutos", seg:180},
+      {label:"5 minutos", seg:300},
+      {label:"10 minutos", seg:600},
+      {label:"15 minutos", seg:900},
+      {label:"20 minutos", seg:1200},
+      {label:"30 minutos", seg:1800}
+    ];
+    tbody.innerHTML = "";
+    tiempos.forEach(t=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${t.label}</td><td>$${(t.seg * TARIFA_POR_SEGUNDO).toLocaleString()}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById("tarifaInfo").textContent = TARIFA_POR_SEGUNDO;
+    document.getElementById("tarifaMinInfo").textContent = TARIFA_POR_MINUTO.toLocaleString();
+  }
+
+  function iniciar(){
+    const t = taxista.value;
+    const c = cliente.value;
+    if(!t || !c){
+      alert("Pon taxista y cliente");
+      return;
+    }
+
+    taxistaActual = t;
+    clienteActual = c;
+    btnStop.classList.remove("hidden");
+    activos++;
+    actualizarActivos();
+
+    registros.push({
+      tipo:"inicio",
+      taxista:t,
+      cliente:c,
+      hora:new Date().toLocaleString()
+    });
+    guardar();
+
+    intervalo = setInterval(()=>{
+      segundos++;
+      precio += TARIFA_POR_SEGUNDO;
+      precioEl.textContent = "$" + Math.round(precio).toLocaleString();
+      tiempoEl.textContent = formato(segundos);
+    },1000);
+  }
+
+  function detener(){
+    clearInterval(intervalo);
+    btnStop.classList.add("hidden");
+    activos = Math.max(0, activos-1);
+    actualizarActivos();
+
+    const totalViaje = Math.round(precio);
+    const tiempoViaje = formato(segundos);
+
+    registros.push({
+      tipo:"fin",
+      taxista: taxistaActual,
+      cliente: clienteActual,
+      total: totalViaje,
+      tiempo: tiempoViaje,
+      hora:new Date().toLocaleString()
+    });
+    guardar();
+
+    // Mostrar recibo
+    mostrarRecibo(taxistaActual, clienteActual, tiempoViaje, totalViaje);
+
+    segundos = 0;
+    precio = 0;
+    precioEl.textContent = "$0";
+    tiempoEl.textContent = "00:00";
+  }
+
+  function mostrarRecibo(taxista, cliente, tiempo, total){
+    const detalle = document.getElementById("reciboDetalle");
+    detalle.innerHTML = `
+      <div><b>Taxista:</b> ${taxista}</div>
+      <div><b>Cliente:</b> ${cliente}</div>
+      <div><b>Duración:</b> ${tiempo}</div>
+      <div><b>Tarifa:</b> $${TARIFA_POR_SEGUNDO}/seg</div>
+      <div><b>Fecha:</b> ${new Date().toLocaleString()}</div>
+    `;
+    document.getElementById("reciboTotal").textContent = "$" + total.toLocaleString();
+    document.getElementById("recibo").classList.remove("hidden");
+  }
+
+  function cerrarRecibo(){
+    document.getElementById("recibo").classList.add("hidden");
+  }
+
+  function formato(s){
+    const m = String(Math.floor(s/60)).padStart(2,"0");
+    const ss = String(s%60).padStart(2,"0");
+    return m+":"+ss;
+  }
+
+  function loginAdmin(){
+    if(adminPass.value === "legion01"){
+      adminPanel.classList.remove("hidden");
+      cargar();
+    }else{
+      alert("Contraseña incorrecta");
+    }
+  }
+
+  function guardar(){
+    localStorage.setItem("registros_legion", JSON.stringify(registros));
+  }
+
+  function cargar(){
+    logs.innerHTML="";
+    registros.forEach(r=>{
+      const d=document.createElement("div");
+      if(r.tipo==="inicio"){
+        d.textContent=`[${r.hora}] ▶ Inicio | ${r.taxista} → ${r.cliente}`;
+      }else{
+        d.textContent=`[${r.hora}] ■ Fin | ${r.taxista} → ${r.cliente} | $${r.total} | ${r.tiempo}`;
+      }
+      logs.appendChild(d);
+    });
+  }
+
+  function actualizarActivos(){
+    document.getElementById("activos").textContent = activos;
+  }
+
+  const precioEl = document.getElementById("precio");
+  const tiempoEl = document.getElementById("tiempo");
+
+  // Inicializar tabla de tarifas al cargar
+  generarTablaTarifas();
+</script>
+</body>
+</html>
